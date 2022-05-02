@@ -1,100 +1,33 @@
-import React, { Component } from 'react';
-import { StyleSheet, View, Text, TextInput, Button, Alert } from 'react-native';
-import AssetExample from './components/AssetExample';
-import { StatusBar } from 'expo-status-bar';
+import React from 'react';
+import { StyleSheet } from 'react-native';
+import Start from './components/Start';
+import Chat from './components/Chat';
+import 'react-native-gesture-handler';
+import { NavigationContainer } from '@react-navigation/native';
+import { createStackNavigator } from '@react-navigation/stack';
+// import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 
-export default class HelloWorld extends Component {
+export default class App extends React.Component {
   constructor(props) {
     super(props);
-    this.state = {
-      text: ''
-    };
-  }
-
-  alertMyText(input = []) {
-    Alert.alert(input.text);
+    this.state = { text: '' };
   }
 
   render() {
-    const { texts, text } = this.state;
+    const stack = createStackNavigator();
     return (
-      <View style={styles.container}>
-        <View style={[styles.header]}>
-          <View style={styles.box1} />
-          <View style={styles.box2}>
-            <Text style={styles.headerText}>Header</Text>
-          </View>
-          <View style={styles.box3} />
-        </View>
-        <View style={styles.body}>
-          <View style={{ flexDirection: 'row' }}>
-            <TextInput
-              style={styles.textInput}
-              onChangeText={(text) => this.setState({ text })}
-              placeholder='type here...' />
-            <Button style={{ fontSize: 20, width: 50, height: 50 }}
-              onPress={() => { this.alertMyText({ text: this.state.input }) }}>
-              Submit</Button>
-          </View>
-          <AssetExample />
-          {/* {texts.map((text) => (<Text key={text}>{text}</Text>))} */}
-        </View>
-        <View style={[styles.header, styles.footer]}>
-          <View style={styles.box2} />
-          <View style={styles.box3}>
-            <Text style={styles.headerText}>Footer</Text>
-          </View>
-          <View style={styles.box1} />
-        </View>
-      </View>
+      <>
+
+        <NavigationContainer>
+          <stack.Navigator initialRouteName='Start'>
+            <stack.Screen options={{ headerShown: false }} name='Start' component={Start} />
+            <stack.Screen name='Chat' component={Chat} />
+          </stack.Navigator>
+        </NavigationContainer>
+      </>
     );
   }
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    flexDirection: 'column'
-  },
-  header: {
-    flex: 0.1,
-    flexDirection: 'row'
-  },
-  body: {
-    flex: 0.8,
-    alignItems: 'center',
-    justifyContent: 'center'
-  },
-  footer: {
-    flex: 0.1,
-  },
-  box1: {
-    flex: 1,
-    backgroundColor: 'red'
-  },
-  box2: {
-    flex: 1,
-    backgroundColor: 'blue'
-  },
-  box3: {
-    flex: 1,
-    backgroundColor: 'yellow'
-  },
-  headerText: {
-    position: 'absolute',
-    top: '50%',
-    left: '50%',
-    transform: [
-      { translateX: "-50%" },
-      { translateY: "-50%" }
-    ]
-  },
-  textInput: {
-    flex: 0,
-    borderColor: 'grey',
-    borderWidth: 1,
-    margin: 20,
-    padding: 10
-  }
-})
+const styles = StyleSheet.create({})
 
