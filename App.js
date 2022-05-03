@@ -14,15 +14,14 @@ export default class App extends React.Component {
   }
 
   render() {
-    const stack = createStackNavigator();
+    const Stack = createStackNavigator();
     return (
       <>
-
         <NavigationContainer>
-          <stack.Navigator initialRouteName='Start'>
-            <stack.Screen options={{ headerShown: false }} name='Start' component={Start} />
-            <stack.Screen name='Chat' component={Chat} />
-          </stack.Navigator>
+          <Stack.Navigator initialRouteName='Start'>
+            <Stack.Screen options={{ headerShown: false }} name='Start' component={Start} />
+            <Stack.Screen name='Chat' component={Chat} />
+          </Stack.Navigator>
         </NavigationContainer>
       </>
     );

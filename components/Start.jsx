@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView } from 'react-native';
+import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
 
 export default class Start extends React.Component {
   constructor(props) {
@@ -8,64 +8,88 @@ export default class Start extends React.Component {
       name: '',
       selectedColor: '#090C08',
       defaultTextColor: 'white',
-      warningText: ''
+      warningText: '',
+      lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0']
     }
   }
-
+  //if user returns and warning is still displayed, take it away
+  componentDidMount() {
+    (this.state.name !== '') && this.setState({ warningText: '' });
+  }
+  //changes current color and text color depending on if color is light or dark
   handleColorChange = (color) => {
-    this.setState({ selectedColor: color, defaultTextColor: (color === '#B9C6AE' || color === '#8A95A5') ? 'black' : 'white' });
+    this.setState({ selectedColor: color, defaultTextColor: (this.state.lightColors.includes(color)) ? 'black' : 'white' });
   }
-
+  //navigates to chat page if name is provided
   handleLogIn = () => {
-    !(this.state.name === '') ?
-      (this.setState({ warningText: '' }), this.alertMyText(this.state.name),
-        this.props.navigation.navigate('Chat', { name: this.state.name, selectedColor: this.state.selectedColor, defaultTextColor: this.state.defaultTextColor }))
-      : (this.setState({ warningText: 'please enter your name' }))
+    (this.state.name !== '') ? (
+      // this.alertMyText(),
+      this.props.navigation.navigate('Chat', { name: this.state.name, selectedColor: this.state.selectedColor, defaultTextColor: this.state.defaultTextColor }))
+      :
+      this.setState({ warningText: 'please enter your name' });
   }
 
-  alertMyText(name) {
-    Alert.alert('Welcome to Chatter ' + name);
-  }
+  // alertMyText() {
+  //   Alert.alert('Welcome ' + this.state.name);
+  // }
 
   render() {
     const { name, warningText, selectedColor, defaultTextColor } = this.state;
-    const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE']
+    const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']
+
     return (
       <>
-        <Image style={styles.backgroundImage} source={require('../assets/BackgroundImage.png')} />
-        <View style={{ flex: 4, alignItems: 'center', justifyContent: 'center' }}>
-          <Text style={styles.title}>Chatter</Text>
+        <View style={{ flex: 1 }} >
+          <KeyboardAvoidingView style={{ flex: 1 }} behavior='height' >
+            <Image style={styles.backgroundImage} source={require('../assets/BackgroundImage.png')} />
+            <View style={{ flex: 20, alignItems: 'center', justifyContent: 'center' }}>
+              <Text style={styles.title}>Chatter</Text>
+            </View>
+            <ScrollView>
+              <View style={styles.container} >
+                <View style={{ flex: 1 }}>
+                  <TextInput
+                    accessible={true}
+                    accessibilityLabel='input for name'
+                    style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
+                    onChangeText={(name) => this.setState({ name })}
+                    value={name}
+                    placeholder='Type your name...'
+                  />
+                </View>
+                <Text style={styles.chooseText}>Choose Background Color</Text>
+                <ScrollView horizontal={true} style={{ flex: 1, flexDirection: 'row' }}>
+                  {colors.map((color) => (
+                    <TouchableOpacity
+                      accessible={true}
+                      accessibilityLabel={'hex code: ' + color}
+                      accessibilityHint="Assigns Background Color"
+                      key={color}
+                      style={[{ borderWidth: 1, borderRadius: 50, borderColor: 'white' }, selectedColor === color && { borderColor: 'black' }]}
+                      onPress={() => this.handleColorChange(color)}>
+                      <View
+                        style={[styles.colors, { backgroundColor: color }]}
+                        key={color}>
+                      </View>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+                <View style={{ flex: 1 }}>
+                  <TouchableOpacity
+                    accessible={true}
+                    accessibilityLabel="Enter Chat App"
+                    accessibilityHint="Goes to Chat Page"
+                    style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleLogIn()} >
+                    <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Start Chatting</Text>
+                  </TouchableOpacity>
+                </View>
+                <View style={{ flex: 1 }}>
+                  <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
+                </View>
+              </View>
+            </ScrollView>
+          </KeyboardAvoidingView>
         </View>
-        <ScrollView>
-          <View style={styles.container} >
-            <View style={{ flex: 1 }}>
-              <TextInput
-                style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
-                onChangeText={(name) => this.setState({ name })}
-                value={name}
-                placeholder='Type your name...'
-              />
-            </View>
-            <Text style={styles.chooseText}>Choose Background Color</Text>
-            <View style={{ flex: 1, flexDirection: 'row' }}>
-              {colors.map((color) => (
-                <TouchableOpacity
-                  style={{ backgroundColor: color, width: 50, height: 50, borderRadius: 50, margin: 10 }}
-                  key={color}
-                  onPress={() => this.handleColorChange(color)}
-                />
-              ))}
-            </View>
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleLogIn()} >
-                <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Start Chatting</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
-            </View>
-          </View>
-        </ScrollView>
       </>
     );
   }
@@ -95,6 +119,14 @@ const styles = StyleSheet.create({
     right: 0,
     height: 'auto',
     width: 'auto'
+  },
+  colors: {
+    width: 44,
+    height: 44,
+    borderRadius: 44,
+    margin: 10,
+    borderWidth: 1,
+    borderColor: 'black'
   },
   nameInput: {
     borderColor: 'gray',

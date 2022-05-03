@@ -1,40 +1,95 @@
 import React, { Component } from 'react';
-import { StyleSheet, View, Text, TextInput, Button, Alert, Image, TouchableOpacity } from 'react-native';
+import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
+import { Bubble, GiftedChat } from 'react-native-gifted-chat';
 
 export default class Chat extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      text: '',
-      texts: ['hello world!']
+      messages: [],
     }
+  }
+
+  //static messages
+  componentDidMount() {
+    this.setState({
+      messages: [
+        {
+          _id: 1,
+          text: 'Hello developer',
+          createdAt: new Date(),
+          user: {
+            _id: 2,
+            name: 'React Native',
+            avatar: 'https://placeimg.com/140/140/any',
+          },
+        },
+        {
+          _id: 2,
+          text: this.props.route.params.name + ' has entered the chat',
+          createdAt: new Date(),
+          system: true,
+        },
+      ],
+    })
+  }
+
+  //allows customization just to message bubble
+  renderBubble(props) {
+    return (
+      <Bubble
+        {...props}
+        wrapperStyle={{
+          right: {
+            backgroundColor: this.props.route.params.selectedColor,
+          }
+        }}
+        textProps={{
+          style: {
+            color: props.position === 'left' ? '#000' : this.props.route.params.defaultTextColor,
+          },
+        }}
+        textStyle={{
+          left: {
+            color: '#000',
+          },
+          right: {
+            color: this.props.route.params.defaultTextColor,
+          },
+        }}
+        timeTextStyle={{
+          left: {
+            color: 'black',
+          },
+          right: {
+            color: this.props.route.params.defaultTextColor,
+          },
+        }}
+      />
+    )
+  }
+
+  //to send text to messages array
+  onSend(messages = []) {
+    this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, messages), }))
   }
 
   render() {
     const { name, selectedColor, defaultTextColor } = this.props.route.params;
-    const { text, texts } = this.state;
+    const { messages } = this.state;
 
-    this.props.navigation.setOptions({ title: name })
     return (
       <>
-        <Image style={styles.backgroundImage} source={require('../assets/BackgroundImage.png')} />
-        <View style={[styles.container, { backgroundColor: selectedColor }]} >
-          <ScrollView style={{ flex: 12 }}>
-            {texts.map((text) => (
-              <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>{text}</Text>))}
-          </ScrollView>
-          <View style={{ flex: 0.1 }}>
-            <TextInput
-              style={[styles.chooseText, styles.nameInput, { borderColor: defaultTextColor }]}
-              onChangeText={(text) => this.setState({ text })}
-              value={text}
-              placeholder='Send Message...'
-            />
-          </View>
-          <TouchableOpacity style={[styles.button, { backgroundColor: defaultTextColor }]} onPress={() => this.setState(previousState => ({ texts: [...previousState.texts, text] }))} >
-            <Text style={{ color: selectedColor, fontSize: 16, fontWeight: 'bold' }}>Send</Text>
-          </TouchableOpacity>
+        <View style={{ flex: 1 }} {...Platform.OS === 'android' ? <KeyboardAvoidingView behavior='height' /> : null} >
+          <GiftedChat
+            renderBubble={this.renderBubble.bind(this)}
+            messages={messages}
+            onSend={(messages) => this.onSend(messages)}
+            user={{
+              _id: 1,
+            }}
+          />
         </View>
       </>
     );
@@ -47,13 +102,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     flex: 1
-  },
-  backgroundImage: {
-    position: 'absolute',
-    top: 0,
-    bottom: 0,
-    left: 0,
-    right: 0
   },
   nameInput: {
     borderColor: 'gray',
@@ -81,3 +129,22 @@ const styles = StyleSheet.create({
     borderRadius: 40
   }
 });
+
+{/* <ScrollView style={{ flex: 12 }}>
+            {texts.map((text) => (
+              <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>{text}</Text>))}
+          </ScrollView> */}
+
+{/* <View style={{ flex: 0.1, backgroundColor: 'white', position: 'absolute', left: 0, right: 0, bottom: 0 }}>
+            <View style={{ flex: 0.1 }}>
+              <TextInput
+                style={[styles.chooseText, styles.nameInput, { borderColor: defaultTextColor }]}
+                onChangeText={(text) => this.setState({ text })}
+                value={text}
+                placeholder='Send Message...'
+              />
+            </View>
+            <TouchableOpacity style={[styles.button, { backgroundColor: defaultTextColor }]} onPress={() => this.setState(previousState => ({ texts: [...previousState.texts, text] }))} >
+              <Text style={{ color: selectedColor, fontSize: 16, fontWeight: 'bold' }}>Send</Text>
+            </TouchableOpacity>
+          </View> */}
