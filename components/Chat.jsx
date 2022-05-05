@@ -1,7 +1,21 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
-import { ScrollView } from 'react-native-gesture-handler';
 import { Bubble, GiftedChat } from 'react-native-gifted-chat';
+
+const firebase = require('firebase');
+require('firebase/firestore');
+
+const firebaseConfig = {
+  apiKey: "AIzaSyDRKQsEWdo-TnHBDaxYUBVF04uySLgM5kE",
+  authDomain: "chat-app-54ecd.firebaseapp.com",
+  projectId: "chat-app-54ecd",
+  storageBucket: "chat-app-54ecd.appspot.com",
+  messagingSenderId: "690320710091",
+};
+
+if (!firebase.apps.length) {
+  firebase.initializeApp(firebaseConfig);
+}
 
 export default class Chat extends React.Component {
   constructor(props) {
@@ -13,6 +27,8 @@ export default class Chat extends React.Component {
 
   //static messages
   componentDidMount() {
+    this.referenceChatApp = firebase.firestore().collection('Messages');
+    this.unsubscribe = this.referenceChatApp.onSnapshot(this.onCollectionUpdate);
     this.setState({
       messages: [
         {
@@ -34,6 +50,30 @@ export default class Chat extends React.Component {
       ],
     })
   }
+
+  componentWillUnmount() {
+    this.unsubscribe();
+  }
+
+  onCollectionUpdate = (querySnapshot) => {
+    const messages = [];
+    //go through each document
+    querySnapshot.forEach((doc) => {
+      //get the QueryDocumentSnapshot's data
+      var data = doc.data();
+      messages.push({
+        _id: data._id,
+        text: data.text,
+        createdAt: data.createdAt.toDate(),
+        user: {
+          _id: data.user._id,
+          name: data.user.name,
+          avatar: data.user.avatar,
+        },
+      });
+    });
+    this.setState({ messages });
+  };
 
   //allows customization just to message bubble
   renderBubble(props) {
