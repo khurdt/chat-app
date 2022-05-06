@@ -1,93 +1,77 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
 import { Bubble, GiftedChat } from 'react-native-gifted-chat';
+import { getDocs, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
+import { auth, db } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
-const firebase = require('firebase');
-require('firebase/firestore');
+export default function Chat(props) {
+  const { name, selectedColor, defaultTextColor } = props.route.params;
 
-const firebaseConfig = {
-  apiKey: "AIzaSyDRKQsEWdo-TnHBDaxYUBVF04uySLgM5kE",
-  authDomain: "chat-app-54ecd.firebaseapp.com",
-  projectId: "chat-app-54ecd",
-  storageBucket: "chat-app-54ecd.appspot.com",
-  messagingSenderId: "690320710091",
-};
+  const [messages, setMessages] = useState([]);
 
-if (!firebase.apps.length) {
-  firebase.initializeApp(firebaseConfig);
-}
+  const [uid, setUid] = useState(0);
 
-export default class Chat extends React.Component {
-  constructor(props) {
-    super(props);
-    this.state = {
-      messages: [],
-    }
+  const chatMessages = collection(db, 'Messages');
+
+  // create a reference to the active user's documents (messages)
+  // const userMessages = chatMessages.where('uid', '==', uid);
+
+  useEffect(() => {
+    props.navigation.setOptions({ title: name });
+
+    const orderMessages = query(chatMessages, orderBy('createdAt', 'desc'));
+
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        auth.signInAnonymously();
+      } else {
+        setUid(user.uid);
+      }
+    })
+
+    const unsuscribe = onSnapshot(orderMessages, onCollectionUpdate);
+
+    return () => { unsuscribe(); }
+
+  }, []);
+
+  const onCollectionUpdate = (querySnapshot) => {
+    setMessages(
+      //go through each document
+      querySnapshot.docs.map(doc => ({
+        //get the QueryDocumentSnapshot's data
+        _id: doc.data()._id,
+        text: doc.data().text,
+        createdAt: doc.data().createdAt.toDate(),
+        user: doc.data().user
+      }))
+    )
   }
 
-  //static messages
-  componentDidMount() {
-    this.referenceChatApp = firebase.firestore().collection('Messages');
-    this.unsubscribe = this.referenceChatApp.onSnapshot(this.onCollectionUpdate);
-    this.setState({
-      messages: [
-        {
-          _id: 1,
-          text: 'Hello developer',
-          createdAt: new Date(),
-          user: {
-            _id: 2,
-            name: 'React Native',
-            avatar: 'https://placeimg.com/140/140/any',
-          },
-        },
-        {
-          _id: 2,
-          text: this.props.route.params.name + ' has entered the chat',
-          createdAt: new Date(),
-          system: true,
-        },
-      ],
+  const addMessage = (newMessage = []) => {
+    addDoc(chatMessages, {
+      uid: uid,
+      _id: newMessage[0]._id,
+      text: newMessage[0].text,
+      createdAt: newMessage[0].createdAt,
+      user: newMessage[0].user,
     })
   }
 
-  componentWillUnmount() {
-    this.unsubscribe();
-  }
-
-  onCollectionUpdate = (querySnapshot) => {
-    const messages = [];
-    //go through each document
-    querySnapshot.forEach((doc) => {
-      //get the QueryDocumentSnapshot's data
-      var data = doc.data();
-      messages.push({
-        _id: data._id,
-        text: data.text,
-        createdAt: data.createdAt.toDate(),
-        user: {
-          _id: data.user._id,
-          name: data.user.name,
-          avatar: data.user.avatar,
-        },
-      });
-    });
-    this.setState({ messages });
-  };
-
   //allows customization just to message bubble
-  renderBubble(props) {
+  const renderBubble = (props) => {
     return (
       <Bubble
         {...props}
         wrapperStyle={{
           right: {
-            backgroundColor: this.props.route.params.selectedColor,
+            backgroundColor: selectedColor,
           }
         }}
         textProps={{
           style: {
-            color: props.position === 'left' ? '#000' : this.props.route.params.defaultTextColor,
+            color: props.position === 'left' ? '#000' : defaultTextColor,
           },
         }}
         textStyle={{
@@ -95,7 +79,7 @@ export default class Chat extends React.Component {
             color: '#000',
           },
           right: {
-            color: this.props.route.params.defaultTextColor,
+            color: defaultTextColor,
           },
         }}
         timeTextStyle={{
@@ -103,7 +87,7 @@ export default class Chat extends React.Component {
             color: 'black',
           },
           right: {
-            color: this.props.route.params.defaultTextColor,
+            color: defaultTextColor,
           },
         }}
       />
@@ -111,29 +95,27 @@ export default class Chat extends React.Component {
   }
 
   //to send text to messages array
-  onSend(messages = []) {
-    this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, messages), }))
+  const onSend = (message = []) => {
+    setMessages(messages => { GiftedChat.append([...messages, message]) });
+    // this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, message), }))
   }
 
-  render() {
-    const { name, selectedColor, defaultTextColor } = this.props.route.params;
-    const { messages } = this.state;
-
-    return (
-      <>
-        <View style={{ flex: 1 }} {...Platform.OS === 'android' ? <KeyboardAvoidingView behavior='height' /> : null} >
-          <GiftedChat
-            renderBubble={this.renderBubble.bind(this)}
-            messages={messages}
-            onSend={(messages) => this.onSend(messages)}
-            user={{
-              _id: 1,
-            }}
-          />
-        </View>
-      </>
-    );
-  }
+  return (
+    <>
+      <View style={{ flex: 1 }} {...Platform.OS === 'android' ? <KeyboardAvoidingView behavior='height' /> : null} >
+        <GiftedChat
+          renderBubble={renderBubble.bind(this)}
+          messages={messages}
+          onSend={(message) => { onSend(message); addMessage(message) }}
+          user={{
+            _id: uid,
+            name: name,
+            avatar: 'https://placeimg.com/140/140/any'
+          }}
+        />
+      </View>
+    </>
+  );
 }
 
 const styles = StyleSheet.create({
@@ -169,6 +151,27 @@ const styles = StyleSheet.create({
     borderRadius: 40
   }
 });
+
+// this.setState({
+//   messages: [
+//     {
+//       _id: 1,
+//       text: 'Hello developer',
+//       createdAt: new Date(),
+//       user: {
+//         _id: 2,
+//         name: 'React Native',
+//         avatar: 'https://placeimg.com/140/140/any',
+//       },
+//     },
+//     {
+//       _id: 2,
+//       text: this.props.route.params.name + ' has entered the chat',
+//       createdAt: new Date(),
+//       system: true,
+//     },
+//   ],
+// })
 
 {/* <ScrollView style={{ flex: 12 }}>
             {texts.map((text) => (
