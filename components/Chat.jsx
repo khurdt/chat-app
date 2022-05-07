@@ -1,34 +1,35 @@
 import React, { useEffect, useState } from 'react';
 import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
-import { Bubble, GiftedChat } from 'react-native-gifted-chat';
-import { getDocs, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
-import { auth, db } from '../config/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
+import { getDocs, onSnapshot, collection, query, orderBy, addDoc, where } from 'firebase/firestore';
+import { db } from '../config/firebase';
+
 
 export default function Chat(props) {
-  const { name, selectedColor, defaultTextColor } = props.route.params;
+  const { name, selectedColor, defaultTextColor, uid } = props.route.params;
 
   const [messages, setMessages] = useState([]);
-
-  const [uid, setUid] = useState(0);
 
   const chatMessages = collection(db, 'Messages');
 
   // create a reference to the active user's documents (messages)
   // const userMessages = chatMessages.where('uid', '==', uid);
 
+  // const q = query(citiesRef, where("state", "==", "CA"))
+
   useEffect(() => {
-    props.navigation.setOptions({ title: name });
+    props.navigation.setOptions({
+      title: name,
+      headerTintColor: selectedColor,
+      headerTitleStyle: {
+        fontWeight: 'bold',
+        textAlign: 'center'
+      },
+    });
 
-    const orderMessages = query(chatMessages, orderBy('createdAt', 'desc'));
+    const userMessages = query(chatMessages, where("uid", "==", uid));
 
-    onAuthStateChanged(auth, user => {
-      if (!user) {
-        auth.signInAnonymously();
-      } else {
-        setUid(user.uid);
-      }
-    })
+    const orderMessages = query(userMessages, orderBy('createdAt', 'desc'));
 
     const unsuscribe = onSnapshot(orderMessages, onCollectionUpdate);
 
@@ -59,7 +60,27 @@ export default function Chat(props) {
     })
   }
 
-  //allows customization just to message bubble
+  //to send text to messages array
+  const onSend = (message = []) => {
+    setMessages(messages => { GiftedChat.append([...messages, message]) });
+    // this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, message), }))
+  }
+
+  const renderInputToolbar = (props) => {
+    return (
+      <InputToolbar
+        {...props}
+        containerStyle={{
+          backgroundColor: "white",
+          borderTopColor: selectedColor,
+          borderRadius: 40,
+          borderTopWidth: 2,
+          padding: 4,
+        }}
+      />
+    );
+  };
+
   const renderBubble = (props) => {
     return (
       <Bubble
@@ -71,12 +92,12 @@ export default function Chat(props) {
         }}
         textProps={{
           style: {
-            color: props.position === 'left' ? '#000' : defaultTextColor,
+            color: props.position === 'left' ? 'black' : defaultTextColor,
           },
         }}
         textStyle={{
           left: {
-            color: '#000',
+            color: 'black',
           },
           right: {
             color: defaultTextColor,
@@ -94,17 +115,12 @@ export default function Chat(props) {
     )
   }
 
-  //to send text to messages array
-  const onSend = (message = []) => {
-    setMessages(messages => { GiftedChat.append([...messages, message]) });
-    // this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, message), }))
-  }
-
   return (
     <>
       <View style={{ flex: 1 }} {...Platform.OS === 'android' ? <KeyboardAvoidingView behavior='height' /> : null} >
         <GiftedChat
           renderBubble={renderBubble.bind(this)}
+          renderInputToolbar={renderInputToolbar.bind(this)}
           messages={messages}
           onSend={(message) => { onSend(message); addMessage(message) }}
           user={{

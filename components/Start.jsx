@@ -1,5 +1,7 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
+import { auth } from '../config/firebase';
+import { onAuthStateChanged } from 'firebase/auth';
 
 export default class Start extends React.Component {
   constructor(props) {
@@ -9,13 +11,22 @@ export default class Start extends React.Component {
       selectedColor: '#090C08',
       defaultTextColor: 'white',
       warningText: '',
-      lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0']
+      lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
+      uid: 0
     }
   }
   //if user returns and warning is still displayed, take it away
   componentDidMount() {
     (this.state.name !== '') && this.setState({ warningText: '' });
+    onAuthStateChanged(auth, user => {
+      if (!user) {
+        auth.signInAnonymously();
+      } else {
+        this.setState({ uid: user.uid });
+      }
+    })
   }
+
   //changes current color and text color depending on if color is light or dark
   handleColorChange = (color) => {
     this.setState({ selectedColor: color, defaultTextColor: (this.state.lightColors.includes(color)) ? 'black' : 'white' });
@@ -24,7 +35,12 @@ export default class Start extends React.Component {
   handleLogIn = () => {
     (this.state.name !== '') ? (
       // this.alertMyText(),
-      this.props.navigation.navigate('Chat', { name: this.state.name, selectedColor: this.state.selectedColor, defaultTextColor: this.state.defaultTextColor }))
+      this.props.navigation.navigate('ChatStackScreen', {
+        name: this.state.name,
+        selectedColor: this.state.selectedColor,
+        defaultTextColor: this.state.defaultTextColor,
+        uid: this.state.uid
+      }))
       :
       this.setState({ warningText: 'please enter your name' });
   }
