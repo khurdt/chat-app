@@ -1,9 +1,7 @@
 import React from 'react';
-import { StyleSheet } from 'react-native';
 import Chat from './Chat';
 import Settings from './Settings';
 import 'react-native-gesture-handler';
-// import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
@@ -12,11 +10,12 @@ export default class ChatStackScreen extends React.Component {
   render() {
     const { name, selectedColor, defaultTextColor, uid } = this.props.route.params;
     const Tab = createBottomTabNavigator();
-    let isRouteStart;
     return (
       <>
         <Tab.Navigator
+          //initially goes to Chat screen
           initialRouteName='Chat'
+          //copied from react-navigation documentation  highlighting page
           screenOptions={({ route }) => ({
             tabBarIcon: ({ focused, color, size }) => {
               let iconName;
@@ -24,9 +23,7 @@ export default class ChatStackScreen extends React.Component {
                 iconName = focused ? 'ios-person' : 'ios-person';
               }
               else if (route.name === 'Settings') {
-                iconName = focused
-                  ? 'ios-cog'
-                  : 'ios-cog';
+                iconName = focused ? 'ios-cog' : 'ios-cog';
               }
 
               // You can return any component that you like here!
@@ -34,11 +31,13 @@ export default class ChatStackScreen extends React.Component {
             },
             tabBarActiveTintColor: 'darkorange',
             tabBarInactiveTintColor: 'gray',
+            tabBarHideOnKeyboard: true
+
           })}
         >
-          {/* <Tab.Screen options={{ headerShown: false }} name='Start' component={Start} /> */}
           <Tab.Screen
             options={{ headerShown: false }}
+            //initial props
             initialParams={{
               name: name,
               selectedColor: selectedColor,
@@ -49,6 +48,7 @@ export default class ChatStackScreen extends React.Component {
             component={Chat} />
           <Tab.Screen
             options={{ headerShown: false }}
+            //initial props
             initialParams={{
               name: name,
               selectedColor: selectedColor,
@@ -62,5 +62,3 @@ export default class ChatStackScreen extends React.Component {
     );
   }
 }
-
-const styles = StyleSheet.create({})

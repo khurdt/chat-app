@@ -1,7 +1,5 @@
-import React, { Component } from 'react';
+import React from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
-import { auth } from '../config/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
 
 export default class Settings extends React.Component {
   constructor(props) {
@@ -10,7 +8,6 @@ export default class Settings extends React.Component {
       name: this.props.route.params.name,
       selectedColor: this.props.route.params.selectedColor,
       defaultTextColor: this.props.route.params.defaultTextColor,
-      warningText: '',
       lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
       uid: this.props.route.params.uid
     }
@@ -24,48 +21,52 @@ export default class Settings extends React.Component {
   handleSettingsChange = () => {
     (this.state.name !== '') ? (
       // this.alertMyText(),
-      this.props.navigation.navigate('Chat', {
-        name: this.state.name,
-        selectedColor: this.state.selectedColor,
-        defaultTextColor: this.state.defaultTextColor,
-        uid: this.state.uid
+      this.props.navigation.navigate('ChatStackScreen', {
+        screen: 'Chat',
+        params: {
+          name: this.state.name,
+          selectedColor: this.state.selectedColor,
+          defaultTextColor: this.state.defaultTextColor,
+          uid: this.state.uid
+        }
       }))
       :
-      this.setState({ warningText: 'please enter your name' });
+      this.noNameAlert();
   }
 
-  // alertMyText() {
-  //   Alert.alert('Welcome ' + this.state.name);
-  // }
+  noNameAlert() {
+    Alert.alert('please enter a name');
+  }
 
   render() {
     const { name, warningText, selectedColor, defaultTextColor } = this.state;
     const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']
 
     return (
-      <>
+      <View style={styles.container} >
         <ScrollView>
-          <View style={styles.container} >
-            <KeyboardAvoidingView style={{ flex: 1 }} behavior='height' >
-              <View style={{ flex: 1 }}>
-                <TextInput
-                  accessible={true}
-                  accessibilityLabel='input for name'
-                  style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
-                  onChangeText={(name) => this.setState({ name })}
-                  value={name}
-                  placeholder='Type your name...'
-                />
-              </View>
+          <KeyboardAvoidingView behavior='height'>
+            <View style={{ flex: 4 }}>
+              <Text style={[styles.chooseText]}>Your Name:</Text>
+              <TextInput
+                accessible={true}
+                accessibilityLabel='input for name'
+                style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
+                onChangeText={(name) => this.setState({ name })}
+                value={name}
+                placeholder='Type your name...'
+              />
+            </View>
+            <View style={{ flex: 3 }}>
               <Text style={styles.chooseText}>Choose Background Color</Text>
-              <ScrollView horizontal={true} style={{ flex: 1, flexDirection: 'row' }}>
+              <ScrollView horizontal={true} style={{ flex: 2, flexDirection: 'row' }}>
                 {colors.map((color) => (
                   <TouchableOpacity
                     accessible={true}
                     accessibilityLabel={'hex code: ' + color}
                     accessibilityHint="Assigns Background Color"
                     key={color}
-                    style={[{ borderWidth: 1, borderRadius: 50, borderColor: 'white' }, selectedColor === color && { borderColor: 'black' }]}
+                    style={[{ borderWidth: 1, borderRadius: 50, borderColor: 'white', height: 66, margin: 1 }, selectedColor === color && { borderColor: 'black' }]}
                     onPress={() => this.handleColorChange(color)}>
                     <View
                       style={[styles.colors, { backgroundColor: color }]}
@@ -74,22 +75,23 @@ export default class Settings extends React.Component {
                   </TouchableOpacity>
                 ))}
               </ScrollView>
-              <View style={{ flex: 1 }}>
-                <TouchableOpacity
-                  accessible={true}
-                  accessibilityLabel="Enter Chat App"
-                  accessibilityHint="Goes to Chat Page"
-                  style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleSettingsChange()} >
-                  <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Save and Chat</Text>
-                </TouchableOpacity>
-              </View>
-              <View style={{ flex: 1 }}>
-                <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
-              </View>
-            </KeyboardAvoidingView>
-          </View>
+            </View>
+            <View style={{ flex: 8 }}></View>
+            <View style={{ flex: 1 }}>
+              <TouchableOpacity
+                accessible={true}
+                accessibilityLabel="Enter Chat App"
+                accessibilityHint="Goes to Chat Page"
+                style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleSettingsChange()} >
+                <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Save and Chat</Text>
+              </TouchableOpacity>
+            </View>
+            <View style={{ flex: 1 }}>
+              <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
+            </View>
+          </KeyboardAvoidingView>
         </ScrollView>
-      </>
+      </View>
     );
   }
 }
@@ -100,6 +102,7 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     padding: 20,
     margin: 25,
+    marginTop: 50,
     width: 'auto',
     height: 'auto',
     flex: 1,
@@ -135,7 +138,8 @@ const styles = StyleSheet.create({
     width: 300,
     padding: 25,
     marginBottom: 10,
-    borderRadius: 40
+    borderRadius: 40,
+    marginTop: 20
   },
   chooseText: {
     fontSize: 16,

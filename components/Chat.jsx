@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Platform, KeyboardAvoidingView } from 'react-native';
+import { StyleSheet, View, Platform, KeyboardAvoidingView, Keyboard } from 'react-native';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
 import { getDocs, onSnapshot, collection, query, orderBy, addDoc, where } from 'firebase/firestore';
 import { db } from '../config/firebase';
@@ -10,14 +10,11 @@ export default function Chat(props) {
 
   const [messages, setMessages] = useState([]);
 
+  //database collection from firebase
   const chatMessages = collection(db, 'Messages');
 
-  // create a reference to the active user's documents (messages)
-  // const userMessages = chatMessages.where('uid', '==', uid);
-
-  // const q = query(citiesRef, where("state", "==", "CA"))
-
   useEffect(() => {
+    //setting navigation Bar options
     props.navigation.setOptions({
       title: name,
       headerTintColor: selectedColor,
@@ -26,17 +23,21 @@ export default function Chat(props) {
         textAlign: 'center'
       },
     });
-
+    //filters chat messages for user's uid
     const userMessages = query(chatMessages, where("uid", "==", uid));
-
+    //orders messages by date showing most recent date
     const orderMessages = query(userMessages, orderBy('createdAt', 'desc'));
-
+    //snapshot function using orderMessages and calling onCollectionUpdate
     const unsuscribe = onSnapshot(orderMessages, onCollectionUpdate);
 
-    return () => { unsuscribe(); }
+    return () => {
+      //calling snapshot one time when component mounts
+      unsuscribe();
+    };
 
   }, []);
 
+  //sets messages array by mapping through all documents from the snapshot from firebase
   const onCollectionUpdate = (querySnapshot) => {
     setMessages(
       //go through each document
@@ -50,6 +51,7 @@ export default function Chat(props) {
     )
   }
 
+  //sends message to firebase as a document in this format
   const addMessage = (newMessage = []) => {
     addDoc(chatMessages, {
       uid: uid,
@@ -63,24 +65,29 @@ export default function Chat(props) {
   //to send text to messages array
   const onSend = (message = []) => {
     setMessages(messages => { GiftedChat.append([...messages, message]) });
+    Keyboard.dismiss();
     // this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, message), }))
   }
 
+  //edits chat input
   const renderInputToolbar = (props) => {
     return (
       <InputToolbar
         {...props}
+        style={{ color: defaultTextColor }}
         containerStyle={{
-          backgroundColor: "white",
-          borderTopColor: selectedColor,
-          borderRadius: 40,
-          borderTopWidth: 2,
-          padding: 4,
+          paddingTop: 4,
+          borderRadius: 100,
+        }}
+        textStyle={{
+          color: selectedColor,
+          paddingBottom: 5
         }}
       />
     );
   };
 
+  //edits text bubbles
   const renderBubble = (props) => {
     return (
       <Bubble
@@ -117,56 +124,57 @@ export default function Chat(props) {
 
   return (
     <>
-      <View style={{ flex: 1 }} {...Platform.OS === 'android' ? <KeyboardAvoidingView behavior='height' /> : null} >
+      <View style={{ flex: 1 }} >
         <GiftedChat
           renderBubble={renderBubble.bind(this)}
+          minInputToolbarHeight={50}
           renderInputToolbar={renderInputToolbar.bind(this)}
           messages={messages}
           onSend={(message) => { onSend(message); addMessage(message) }}
           user={{
             _id: uid,
-            name: name,
-            avatar: 'https://placeimg.com/140/140/any'
+            name: name
           }}
         />
+        {Platform.OS === 'android' ? <KeyboardAvoidingView behavior={'position'} /> : null}
       </View>
     </>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 20,
-    flex: 1
-  },
-  nameInput: {
-    borderColor: 'gray',
-    borderWidth: 2,
-    width: 350,
-    padding: 10,
-    paddingRight: 60,
-    borderRadius: 40
-  },
-  chooseText: {
-    fontSize: 16,
-    color: '#757083',
-    fontWeight: 'bold'
-  },
-  button: {
-    position: 'absolute',
-    bottom: 0,
-    right: 0,
-    marginBottom: 39,
-    marginRight: 8,
-    height: 43,
-    width: 50,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: 40
-  }
-});
+// const styles = StyleSheet.create({
+//   container: {
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     padding: 20,
+//     flex: 1
+//   },
+//   nameInput: {
+//     borderColor: 'gray',
+//     borderWidth: 2,
+//     width: 350,
+//     padding: 10,
+//     paddingRight: 60,
+//     borderRadius: 40
+//   },
+//   chooseText: {
+//     fontSize: 16,
+//     color: '#757083',
+//     fontWeight: 'bold'
+//   },
+//   button: {
+//     position: 'absolute',
+//     bottom: 0,
+//     right: 0,
+//     marginBottom: 39,
+//     marginRight: 8,
+//     height: 43,
+//     width: 50,
+//     alignItems: 'center',
+//     justifyContent: 'center',
+//     borderRadius: 40
+//   }
+// });
 
 // this.setState({
 //   messages: [

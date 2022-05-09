@@ -1,7 +1,7 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { auth } from '../config/firebase';
-import { onAuthStateChanged } from 'firebase/auth';
+import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 
 export default class Start extends React.Component {
   constructor(props) {
@@ -10,21 +10,25 @@ export default class Start extends React.Component {
       name: '',
       selectedColor: '#090C08',
       defaultTextColor: 'white',
-      warningText: '',
       lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
       uid: 0
     }
   }
   //if user returns and warning is still displayed, take it away
   componentDidMount() {
-    (this.state.name !== '') && this.setState({ warningText: '' });
-    onAuthStateChanged(auth, user => {
+    //getting authorization using imported auth and setting user if no user
+    this.authUnsubscribe = onAuthStateChanged(auth, user => {
       if (!user) {
-        auth.signInAnonymously();
+        signInAnonymously(auth);
       } else {
         this.setState({ uid: user.uid });
       }
     })
+  }
+
+  componentWillUnmount() {
+    //calling authorization when component finishes mounting
+    this.authUnsubscribe();
   }
 
   //changes current color and text color depending on if color is light or dark
@@ -42,13 +46,12 @@ export default class Start extends React.Component {
         uid: this.state.uid
       }))
       :
-      this.setState({ warningText: 'please enter your name' });
+      this.noNameAlert();
   }
 
-  // alertMyText() {
-  //   Alert.alert('Welcome ' + this.state.name);
-  // }
-
+  noNameAlert() {
+    Alert.alert('please enter a name');
+  }
   render() {
     const { name, warningText, selectedColor, defaultTextColor } = this.state;
     const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']

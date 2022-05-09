@@ -1,11 +1,9 @@
 import React from 'react';
-import { StyleSheet, Button } from 'react-native';
 import ChatStackScreen from './components/ChatStackScreen';
 import Start from './components/Start';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
-import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default class App extends React.Component {
 
@@ -24,5 +22,4 @@ export default class App extends React.Component {
   }
 }
 
-const styles = StyleSheet.create({})
 
