@@ -44,53 +44,48 @@ export default class Settings extends React.Component {
 
     return (
       <View style={styles.container} >
-        <ScrollView>
-          <KeyboardAvoidingView behavior='height'>
-            <View style={{ flex: 4 }}>
-              <Text style={[styles.chooseText]}>Your Name:</Text>
-              <TextInput
-                accessible={true}
-                accessibilityLabel='input for name'
-                style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
-                onChangeText={(name) => this.setState({ name })}
-                value={name}
-                placeholder='Type your name...'
-              />
-            </View>
-            <View style={{ flex: 3 }}>
-              <Text style={styles.chooseText}>Choose Background Color</Text>
-              <ScrollView horizontal={true} style={{ flex: 2, flexDirection: 'row' }}>
-                {colors.map((color) => (
-                  <TouchableOpacity
-                    accessible={true}
-                    accessibilityLabel={'hex code: ' + color}
-                    accessibilityHint="Assigns Background Color"
-                    key={color}
-                    style={[{ borderWidth: 1, borderRadius: 50, borderColor: 'white', height: 66, margin: 1 }, selectedColor === color && { borderColor: 'black' }]}
-                    onPress={() => this.handleColorChange(color)}>
-                    <View
-                      style={[styles.colors, { backgroundColor: color }]}
-                      key={color}>
-                    </View>
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            </View>
-            <View style={{ flex: 8 }}></View>
-            <View style={{ flex: 1 }}>
-              <TouchableOpacity
-                accessible={true}
-                accessibilityLabel="Enter Chat App"
-                accessibilityHint="Goes to Chat Page"
-                style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleSettingsChange()} >
-                <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Save and Chat</Text>
-              </TouchableOpacity>
-            </View>
-            <View style={{ flex: 1 }}>
-              <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
-            </View>
-          </KeyboardAvoidingView>
-        </ScrollView>
+        <KeyboardAvoidingView style={{ flex: 1 }} behavior='positon'>
+          <View style={{ flex: 1, minHeight: 100, marginBottom: 30 }}>
+            <Text style={[styles.chooseText]}>Your Name:</Text>
+            <TextInput
+              accessible={true}
+              accessibilityLabel='input for name'
+              style={[styles.chooseText, styles.nameInput, { borderColor: selectedColor }]}
+              onChangeText={(name) => this.setState({ name })}
+              value={name}
+              placeholder='Type your name...'
+            />
+          </View>
+          <View style={{ minHeight: 100 }}>
+            <Text style={styles.chooseText}>Choose Background Color</Text>
+            <ScrollView horizontal={true} style={{ flex: 2, flexDirection: 'row' }}>
+              {colors.map((color) => (
+                <TouchableOpacity
+                  accessible={true}
+                  accessibilityLabel={'hex code: ' + color}
+                  accessibilityHint="Assigns Background Color"
+                  key={color}
+                  style={[{ borderWidth: 1, borderRadius: 50, borderColor: 'white', height: 66, margin: 1 }, selectedColor === color && { borderColor: 'black' }]}
+                  onPress={() => this.handleColorChange(color)}>
+                  <View
+                    style={[styles.colors, { backgroundColor: color }]}
+                    key={color}>
+                  </View>
+                </TouchableOpacity>
+              ))}
+            </ScrollView>
+          </View>
+          <View style={{ flex: 9 }}></View>
+          <View style={{ flex: 4 }}>
+            <TouchableOpacity
+              accessible={true}
+              accessibilityLabel="Enter Chat App"
+              accessibilityHint="Goes to Chat Page"
+              style={[styles.button, { backgroundColor: selectedColor }]} onPress={() => this.handleSettingsChange()} >
+              <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Save and Chat</Text>
+            </TouchableOpacity>
+          </View>
+        </KeyboardAvoidingView>
       </View>
     );
   }
@@ -136,7 +131,7 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 2,
     width: 300,
-    padding: 25,
+    padding: 20,
     marginBottom: 10,
     borderRadius: 40,
     marginTop: 20

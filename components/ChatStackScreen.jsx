@@ -1,42 +1,25 @@
-import React from 'react';
+import * as React from 'react';
 import Chat from './Chat';
 import Settings from './Settings';
 import 'react-native-gesture-handler';
+import { Button, View } from 'react-native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { createDrawerNavigator } from '@react-navigation/drawer';
+import { NavigationContainer } from '@react-navigation/native';
 import Ionicons from 'react-native-vector-icons/Ionicons';
 
 export default class ChatStackScreen extends React.Component {
 
   render() {
     const { name, selectedColor, defaultTextColor, uid } = this.props.route.params;
-    const Tab = createBottomTabNavigator();
+    // const Tab = createBottomTabNavigator();
+    const Drawer = createDrawerNavigator();
     return (
       <>
-        <Tab.Navigator
+        <Drawer.Navigator
           //initially goes to Chat screen
-          initialRouteName='Chat'
-          //copied from react-navigation documentation  highlighting page
-          screenOptions={({ route }) => ({
-            tabBarIcon: ({ focused, color, size }) => {
-              let iconName;
-              if (route.name === 'Chat') {
-                iconName = focused ? 'ios-person' : 'ios-person';
-              }
-              else if (route.name === 'Settings') {
-                iconName = focused ? 'ios-cog' : 'ios-cog';
-              }
-
-              // You can return any component that you like here!
-              return <Ionicons name={iconName} size={size} color={color} />;
-            },
-            tabBarActiveTintColor: 'darkorange',
-            tabBarInactiveTintColor: 'gray',
-            tabBarHideOnKeyboard: true
-
-          })}
-        >
-          <Tab.Screen
-            options={{ headerShown: false }}
+          initialRouteName='Chat'>
+          <Drawer.Screen
             //initial props
             initialParams={{
               name: name,
@@ -46,8 +29,7 @@ export default class ChatStackScreen extends React.Component {
             }}
             name='Chat'
             component={Chat} />
-          <Tab.Screen
-            options={{ headerShown: false }}
+          <Drawer.Screen
             //initial props
             initialParams={{
               name: name,
@@ -57,7 +39,7 @@ export default class ChatStackScreen extends React.Component {
             }}
             name='Settings'
             component={Settings} />
-        </Tab.Navigator>
+        </Drawer.Navigator>
       </>
     );
   }

@@ -23,6 +23,7 @@ export default function Chat(props) {
         textAlign: 'center'
       },
     });
+
     //filters chat messages for user's uid
     const userMessages = query(chatMessages, where("uid", "==", uid));
     //orders messages by date showing most recent date
@@ -65,7 +66,6 @@ export default function Chat(props) {
   //to send text to messages array
   const onSend = (message = []) => {
     setMessages(messages => { GiftedChat.append([...messages, message]) });
-    Keyboard.dismiss();
     // this.setState(previousState => ({ messages: GiftedChat.append(previousState.messages, message), }))
   }
 
@@ -123,95 +123,34 @@ export default function Chat(props) {
   }
 
   return (
-    <>
-      <View style={{ flex: 1 }} >
-        <GiftedChat
-          renderBubble={renderBubble.bind(this)}
-          minInputToolbarHeight={50}
-          renderInputToolbar={renderInputToolbar.bind(this)}
-          messages={messages}
-          onSend={(message) => { onSend(message); addMessage(message) }}
-          user={{
-            _id: uid,
-            name: name
-          }}
-        />
-        {Platform.OS === 'android' ? <KeyboardAvoidingView behavior={'position'} /> : null}
-      </View>
-    </>
+    <KeyboardAvoidingView
+      behavior={Platform.OS === 'ios' ? 'padding' : undefined}
+      style={{ flex: 1, backgroundColor: 'white' }}>
+      <GiftedChat
+        renderBubble={renderBubble.bind(this)}
+        minInputToolbarHeight={50}
+        renderInputToolbar={renderInputToolbar.bind(this)}
+        messages={messages}
+        onSend={(message) => { onSend(message); addMessage(message) }}
+        user={{
+          _id: uid,
+          name: name
+        }}
+        isTyping
+        alwaysShowSend
+        lightboxProps={{ useNativeDriver: true }}
+        // onLoadEarlier={onLoadEarlierMessages}
+        // isLoadingEarlier={isLoadingEarlier}
+        // loadEarlier={messages.length >= 15 && messagePage <= messageLastPage}
+        infiniteScroll
+        isCustomViewBottom
+        // renderActions={renderActions}
+        // renderComposer={renderComposer}
+        // renderSend={renderSend}
+        isKeyboardInternallyHandled={false}
+      />
+      {Platform.OS === 'ios' &&
+        <View style={{ height: 84, backgroundColor: selectedColor }} />}
+    </KeyboardAvoidingView>
   );
 }
-
-// const styles = StyleSheet.create({
-//   container: {
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     padding: 20,
-//     flex: 1
-//   },
-//   nameInput: {
-//     borderColor: 'gray',
-//     borderWidth: 2,
-//     width: 350,
-//     padding: 10,
-//     paddingRight: 60,
-//     borderRadius: 40
-//   },
-//   chooseText: {
-//     fontSize: 16,
-//     color: '#757083',
-//     fontWeight: 'bold'
-//   },
-//   button: {
-//     position: 'absolute',
-//     bottom: 0,
-//     right: 0,
-//     marginBottom: 39,
-//     marginRight: 8,
-//     height: 43,
-//     width: 50,
-//     alignItems: 'center',
-//     justifyContent: 'center',
-//     borderRadius: 40
-//   }
-// });
-
-// this.setState({
-//   messages: [
-//     {
-//       _id: 1,
-//       text: 'Hello developer',
-//       createdAt: new Date(),
-//       user: {
-//         _id: 2,
-//         name: 'React Native',
-//         avatar: 'https://placeimg.com/140/140/any',
-//       },
-//     },
-//     {
-//       _id: 2,
-//       text: this.props.route.params.name + ' has entered the chat',
-//       createdAt: new Date(),
-//       system: true,
-//     },
-//   ],
-// })
-
-{/* <ScrollView style={{ flex: 12 }}>
-            {texts.map((text) => (
-              <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>{text}</Text>))}
-          </ScrollView> */}
-
-{/* <View style={{ flex: 0.1, backgroundColor: 'white', position: 'absolute', left: 0, right: 0, bottom: 0 }}>
-            <View style={{ flex: 0.1 }}>
-              <TextInput
-                style={[styles.chooseText, styles.nameInput, { borderColor: defaultTextColor }]}
-                onChangeText={(text) => this.setState({ text })}
-                value={text}
-                placeholder='Send Message...'
-              />
-            </View>
-            <TouchableOpacity style={[styles.button, { backgroundColor: defaultTextColor }]} onPress={() => this.setState(previousState => ({ texts: [...previousState.texts, text] }))} >
-              <Text style={{ color: selectedColor, fontSize: 16, fontWeight: 'bold' }}>Send</Text>
-            </TouchableOpacity>
-          </View> */}

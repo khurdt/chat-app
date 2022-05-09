@@ -102,9 +102,6 @@ export default class Start extends React.Component {
                     <Text style={{ color: defaultTextColor, fontSize: 16, fontWeight: 'bold' }}>Start Chatting</Text>
                   </TouchableOpacity>
                 </View>
-                <View style={{ flex: 1 }}>
-                  <Text style={{ color: 'darkorange', position: 'relative', height: 20 }}>{warningText}</Text>
-                </View>
               </View>
             </ScrollView>
           </KeyboardAvoidingView>
@@ -151,7 +148,7 @@ const styles = StyleSheet.create({
     borderColor: 'gray',
     borderWidth: 2,
     width: 300,
-    padding: 25,
+    padding: 20,
     marginBottom: 10,
     borderRadius: 40
   },
