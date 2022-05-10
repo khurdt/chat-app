@@ -25,9 +25,10 @@ export default function Chat(props) {
     });
 
     //filters chat messages for user's uid
-    const userMessages = query(chatMessages, where("uid", "==", uid));
+    // const userMessages = query(chatMessages, where("uid", "==", uid));
+    
     //orders messages by date showing most recent date
-    const orderMessages = query(userMessages, orderBy('createdAt', 'desc'));
+    const orderMessages = query(chatMessages, orderBy('createdAt', 'desc'));
     //snapshot function using orderMessages and calling onCollectionUpdate
     const unsuscribe = onSnapshot(orderMessages, onCollectionUpdate);
 
