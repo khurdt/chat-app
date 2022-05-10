@@ -1,15 +1,39 @@
 import React from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default class Settings extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
-      name: this.props.route.params.name,
-      selectedColor: this.props.route.params.selectedColor,
-      defaultTextColor: this.props.route.params.defaultTextColor,
+      name: '',
+      selectedColor: '#090C08',
+      defaultTextColor: 'white',
       lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
-      uid: this.props.route.params.uid
+    }
+  }
+
+  componentDidMount() {
+    this.getUserInfo();
+  }
+
+  async getUserInfo() {
+    let name, selectedColor, defaultTextColor;
+
+    try {
+      name = await AsyncStorage.getItem('name');
+      selectedColor = await AsyncStorage.getItem('selectedColor');
+      defaultTextColor = await AsyncStorage.getItem('defaultTextColor')
+    } catch (error) {
+      console.log(error);
+    }
+
+    if (name !== null) {
+      this.setState({
+        name: name,
+        selectedColor: selectedColor,
+        defaultTextColor: defaultTextColor
+      })
     }
   }
 
@@ -17,21 +41,28 @@ export default class Settings extends React.Component {
   handleColorChange = (color) => {
     this.setState({ selectedColor: color, defaultTextColor: (this.state.lightColors.includes(color)) ? 'black' : 'white' });
   }
+
+  async saveUserInfo() {
+    try {
+      await AsyncStorage.setItem('name', this.state.name);
+      await AsyncStorage.setItem('selectedColor', this.state.selectedColor);
+      await AsyncStorage.setItem('defaultTextColor', this.state.defaultTextColor);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
   //navigates to chat page if name is provided
-  handleSettingsChange = () => {
-    (this.state.name !== '') ? (
-      // this.alertMyText(),
-      this.props.navigation.navigate('ChatStackScreen', {
-        screen: 'Chat',
-        params: {
-          name: this.state.name,
-          selectedColor: this.state.selectedColor,
-          defaultTextColor: this.state.defaultTextColor,
-          uid: this.state.uid
-        }
-      }))
+  handleSettingsChange = async () => {
+    (this.state.name === '') ?
+      this.noNameAlert()
       :
-      this.noNameAlert();
+      await this.saveUserInfo();
+    this.props.navigation.navigate('Chat', {
+      newName: this.state.name,
+      newColor: this.state.selectedColor,
+      newDefaultTextColor: this.state.defaultTextColor
+    })
   }
 
   noNameAlert() {

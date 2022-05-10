@@ -2,6 +2,8 @@ import React, { Component } from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
 import { auth } from '../config/firebase';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
+import NetInfo from '@react-native-community/netinfo';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default class Start extends React.Component {
   constructor(props) {
@@ -11,12 +13,21 @@ export default class Start extends React.Component {
       selectedColor: '#090C08',
       defaultTextColor: 'white',
       lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
-      uid: 0
+      uid: 0,
+      isConnected: false
     }
   }
   //if user returns and warning is still displayed, take it away
   componentDidMount() {
     //getting authorization using imported auth and setting user if no user
+    NetInfo.fetch().then(connection => {
+      if (connection.isConnected) {
+        this.setState({ isConnected: true });
+      } else {
+        this.setState({ isConnected: false });
+      }
+    })
+
     this.authUnsubscribe = onAuthStateChanged(auth, user => {
       if (!user) {
         signInAnonymously(auth);
@@ -24,6 +35,25 @@ export default class Start extends React.Component {
         this.setState({ uid: user.uid });
       }
     })
+
+    this.getUserInfo();
+  }
+
+  async getUserInfo() {
+    let name, selectedColor, defaultTextColor;
+
+    try {
+      name = await AsyncStorage.getItem('name');
+      selectedColor = await AsyncStorage.getItem('selectedColor');
+      defaultTextColor = await AsyncStorage.getItem('defaultTextColor');
+    } catch (error) {
+      console.log(error);
+    }
+
+    if (name !== null) {
+      this.setState({ name: name, selectedColor: selectedColor, defaultTextColor: defaultTextColor });
+      this.handleAutoLogIn();
+    }
   }
 
   componentWillUnmount() {
@@ -35,25 +65,41 @@ export default class Start extends React.Component {
   handleColorChange = (color) => {
     this.setState({ selectedColor: color, defaultTextColor: (this.state.lightColors.includes(color)) ? 'black' : 'white' });
   }
+
+  async saveUserInfo() {
+    try {
+      await AsyncStorage.setItem('name', this.state.name);
+      await AsyncStorage.setItem('selectedColor', this.state.selectedColor);
+      await AsyncStorage.setItem('defaultTextColor', this.state.defaultTextColor);
+    } catch (error) {
+      console.log(error);
+    }
+  }
+
+  handleAutoLogIn() {
+    this.props.navigation.navigate('ChatStackScreen', { uid: this.state.uid })
+
+  }
+
   //navigates to chat page if name is provided
-  handleLogIn = () => {
-    (this.state.name !== '') ? (
-      // this.alertMyText(),
+  async handleLogIn() {
+    (this.state.name === '') && this.Alert('please enter your name');
+    if (this.state.name !== '') {
+      await this.saveUserInfo();
       this.props.navigation.navigate('ChatStackScreen', {
         name: this.state.name,
         selectedColor: this.state.selectedColor,
         defaultTextColor: this.state.defaultTextColor,
         uid: this.state.uid
-      }))
-      :
-      this.noNameAlert();
+      })
+    }
   }
 
-  noNameAlert() {
-    Alert.alert('please enter a name');
+  Alert(message) {
+    Alert.alert(message);
   }
   render() {
-    const { name, warningText, selectedColor, defaultTextColor } = this.state;
+    const { name, selectedColor, defaultTextColor } = this.state;
     const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']
 
     return (
