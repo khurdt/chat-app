@@ -1,7 +1,5 @@
 import React, { Component } from 'react';
 import { StyleSheet, View, Text, TextInput, Alert, Image, TouchableOpacity, ScrollView, KeyboardAvoidingView } from 'react-native';
-import { auth } from '../config/firebase';
-import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import NetInfo from '@react-native-community/netinfo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -13,7 +11,6 @@ export default class Start extends React.Component {
       selectedColor: '#090C08',
       defaultTextColor: 'white',
       lightColors: ['#8A95A5', '#B9C6AE', '#00FF00', '#FFFF00', '#00FFFF', '#C0C0C0'],
-      uid: 0,
       isConnected: false
     }
   }
@@ -25,14 +22,6 @@ export default class Start extends React.Component {
         this.setState({ isConnected: true });
       } else {
         this.setState({ isConnected: false });
-      }
-    })
-
-    this.authUnsubscribe = onAuthStateChanged(auth, user => {
-      if (!user) {
-        signInAnonymously(auth);
-      } else {
-        this.setState({ uid: user.uid });
       }
     })
 
@@ -56,11 +45,6 @@ export default class Start extends React.Component {
     }
   }
 
-  componentWillUnmount() {
-    //calling authorization when component finishes mounting
-    this.authUnsubscribe();
-  }
-
   //changes current color and text color depending on if color is light or dark
   handleColorChange = (color) => {
     this.setState({ selectedColor: color, defaultTextColor: (this.state.lightColors.includes(color)) ? 'black' : 'white' });
@@ -77,7 +61,7 @@ export default class Start extends React.Component {
   }
 
   handleAutoLogIn() {
-    this.props.navigation.navigate('ChatStackScreen', { uid: this.state.uid })
+    this.props.navigation.navigate('ChatStackScreen')
 
   }
 
@@ -86,12 +70,7 @@ export default class Start extends React.Component {
     (this.state.name === '') && this.Alert('please enter your name');
     if (this.state.name !== '') {
       await this.saveUserInfo();
-      this.props.navigation.navigate('ChatStackScreen', {
-        name: this.state.name,
-        selectedColor: this.state.selectedColor,
-        defaultTextColor: this.state.defaultTextColor,
-        uid: this.state.uid
-      })
+      this.props.navigation.navigate('ChatStackScreen')
     }
   }
 
@@ -100,7 +79,7 @@ export default class Start extends React.Component {
   }
   render() {
     const { name, selectedColor, defaultTextColor } = this.state;
-    const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#FFFF00', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']
+    const colors = ['#090C08', '#474056', '#8A95A5', '#B9C6AE', '#FF0000', '#00FF00', '#0000FF', '#00FFFF', '#FF00FF', '#C0C0C0', '#808080', '#800000', '#808000', '#008000', '#800080', '#008080', '#000080']
 
     return (
       <>

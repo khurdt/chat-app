@@ -7,7 +7,7 @@ import { createDrawerNavigator } from '@react-navigation/drawer';
 export default class ChatStackScreen extends React.Component {
 
   render() {
-    const { uid, name, selectedColor, defaultTextColor } = this.props.route.params;
+    // const { uid, name, selectedColor, defaultTextColor } = this.props.route.params;
     // const Tab = createBottomTabNavigator();
     const Drawer = createDrawerNavigator();
     return (
@@ -18,21 +18,13 @@ export default class ChatStackScreen extends React.Component {
           <Drawer.Screen
             //initial props
             initialParams={{
-              uid: uid,
-              selectedColor: selectedColor,
-              defaultTextColor: defaultTextColor,
-              name: name
+              newColor: '',
+              newName: '',
+              newDefaultTextColor: ''
             }}
             name='Chat'
             component={Chat} />
           <Drawer.Screen
-            //initial props
-            initialParams={{
-              uid: uid,
-              selectedColor: selectedColor,
-              defaultTextColor: defaultTextColor,
-              name: name
-            }}
             name='Settings'
             component={Settings} />
         </Drawer.Navigator>
