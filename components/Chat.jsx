@@ -1,13 +1,15 @@
 import React, { useEffect, useState } from 'react';
-import { StyleSheet, View, Platform, KeyboardAvoidingView, Keyboard, LogBox } from 'react-native';
+import CustomActions from './CustomActions';
+import { View, Platform, KeyboardAvoidingView, LogBox } from 'react-native';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
-import { getDocs, onSnapshot, collection, query, orderBy, addDoc, where } from 'firebase/firestore';
+import { getDocs, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { db, auth } from '../config/firebase';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import NetInfo from '@react-native-community/netinfo';
-import { Trash2, RefreshCw, RefreshCcw } from 'react-native-feather';
+import { Trash2, RefreshCw } from 'react-native-feather';
 import { ScrollView } from 'react-native-gesture-handler';
+import MapView from 'react-native-maps';
 
 export default function Chat(props) {
   const { newColor, newName, newDefaultTextColor } = props.route.params;
@@ -139,7 +141,9 @@ export default function Chat(props) {
         _id: doc.data()._id,
         text: doc.data().text,
         createdAt: doc.data().createdAt.toDate(),
-        user: doc.data().user
+        user: doc.data().user,
+        image: doc.data().image,
+
       }))
     ), () => {
       saveMessagesLocally();
@@ -148,12 +152,15 @@ export default function Chat(props) {
 
   //sends message to firebase as a document in this format
   const addMessageToDataBase = (newMessage = []) => {
+    let nm = newMessage[0];
     addDoc(chatMessages, {
       uid: uid,
-      _id: newMessage[0]._id,
-      text: newMessage[0].text,
-      createdAt: newMessage[0].createdAt,
-      user: newMessage[0].user,
+      _id: nm._id,
+      text: nm.text,
+      createdAt: nm.createdAt,
+      user: nm.user,
+      image: nm.image,
+      location: nm.location
     })
   }
 
@@ -213,6 +220,28 @@ export default function Chat(props) {
     )
   }
 
+  const renderActions = (props) => {
+    return <CustomActions {...props} />
+  };
+
+  const renderCustomView = (props) => {
+    const { currentMessage } = props;
+    if (currentMessage.location) {
+      return (
+        <MapView
+          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          region={{
+            latitude: currentMessage.location.latitude,
+            longitude: currentMessage.location.longitude,
+            latitudeDelta: 0.0922,
+            longitudeDelta: 0.0421,
+          }}
+        />
+      );
+    }
+    return null;
+  }
+
   LogBox.ignoreLogs([
     "Setting a timer",
     "Warning: ...",
@@ -229,7 +258,7 @@ export default function Chat(props) {
         renderAvatarOnTop={true}
         renderBubble={renderBubble}
         minInputToolbarHeight={50}
-        renderInputToolbar={renderInputToolbar.bind(this)}
+        renderInputToolbar={renderInputToolbar}
         messages={messages}
         onSend={(message) => { onSend(message); addMessageToDataBase(message) }}
         user={{
@@ -239,12 +268,13 @@ export default function Chat(props) {
         isTyping
         alwaysShowSend
         lightboxProps={{ useNativeDriver: true }}
+        renderCustomView={renderCustomView}
         // onLoadEarlier={onLoadEarlierMessages}
         // isLoadingEarlier={isLoadingEarlier}
         // loadEarlier={messages.length >= 15 && messagePage <= messageLastPage}
         infiniteScroll
         isCustomViewBottom
-        // renderActions={renderActions}
+        renderActions={renderActions}
         // renderComposer={renderComposer}
         // renderSend={renderSend}
         isKeyboardInternallyHandled={false}
