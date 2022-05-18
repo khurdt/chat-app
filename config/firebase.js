@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { getAuth } from "firebase/auth";
 import { getFirestore } from "firebase/firestore";
+import { getStorage } from "firebase/storage";
 
 //credentials from account
 const firebaseApp = initializeApp({
@@ -10,6 +11,8 @@ const firebaseApp = initializeApp({
   storageBucket: "chat-app-54ecd.appspot.com",
   messagingSenderId: "690320710091",
 })
+
+export const storage = getStorage(firebaseApp);
 
 //getting authorization
 export const auth = getAuth(firebaseApp);

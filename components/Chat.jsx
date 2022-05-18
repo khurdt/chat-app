@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import CustomActions from './CustomActions';
-import { View, Platform, KeyboardAvoidingView, LogBox } from 'react-native';
+
+import { View, Platform, KeyboardAvoidingView, LogBox, ScrollView, Animated, TouchableOpacity, Text } from 'react-native';
 import { GiftedChat, Bubble, InputToolbar } from 'react-native-gifted-chat';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import NetInfo from '@react-native-community/netinfo';
+import MapView from 'react-native-maps';
+import { Marker } from 'react-native-maps';
+
 import { getDocs, onSnapshot, collection, query, orderBy, addDoc } from 'firebase/firestore';
 import { onAuthStateChanged, signInAnonymously } from 'firebase/auth';
 import { db, auth } from '../config/firebase';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import NetInfo from '@react-native-community/netinfo';
+
 import { Trash2, RefreshCw } from 'react-native-feather';
-import { ScrollView } from 'react-native-gesture-handler';
-import MapView from 'react-native-maps';
 
 export default function Chat(props) {
   const { newColor, newName, newDefaultTextColor } = props.route.params;
@@ -19,6 +22,8 @@ export default function Chat(props) {
   const [uid, setUid] = useState(0);
   const [messages, setMessages] = useState([]);
   const [isConnected, setIsConnected] = useState(false);
+  const [rotateAnimation, setRotateAnimation] = useState(new Animated.Value(0)); // Makes animated value
+  const [alert, setAlert] = useState('');
 
   //database collection from firebase
   const chatMessages = collection(db, 'Messages');
@@ -90,13 +95,20 @@ export default function Chat(props) {
         headerRight: () => (
           <>
             {Platform.OS === 'android' &&
-              <ScrollView horizontal={true} style={{ flex: 1, margin: 10, paddingRight: 20, flexDirection: 'row' }}>
-                <Trash2 style={{ marginRight: 30 }} stroke={defaultTextColor} fill={selectedColor} width={35} height={35}
+              <ScrollView horizontal={true} style={{ flex: 1, margin: 1, paddingRight: 20, flexDirection: 'row' }}>
+                <Text style={{ margin: 10, paddingLeft: 10, color: selectedColor }}>{alert}</Text>
+                <Trash2 style={{ marginRight: 30 }} stroke={selectedColor} fill={'white'} width={35} height={35}
                   onPress={() => deleteMessagesLocally()}
                 />
-                <RefreshCw stroke={selectedColor} fill={defaultTextColor} width={35} height={35}
-                  onPress={() => { onSnapshot(orderMessages, onCollectionUpdate); checkInternet(); }}
-                />
+                <TouchableOpacity onPress={async () => { onSnapshot(orderMessages, onCollectionUpdate); checkInternet(); handleAnimation() }}>
+                  <Animated.View style={[animatedStyle]}>
+                    <RefreshCw
+                      stroke={selectedColor}
+                      fill={'white'}
+                      width={35} height={35}
+                    />
+                  </Animated.View>
+                </TouchableOpacity>
               </ScrollView>
             }
           </>
@@ -139,11 +151,11 @@ export default function Chat(props) {
       querySnapshot.docs.map(doc => ({
         //get the QueryDocumentSnapshot's data
         _id: doc.data()._id,
-        text: doc.data().text,
+        text: doc.data().text || '',
         createdAt: doc.data().createdAt.toDate(),
         user: doc.data().user,
-        image: doc.data().image,
-
+        image: doc.data().image || null,
+        location: doc.data().location || null,
       }))
     ), () => {
       saveMessagesLocally();
@@ -156,11 +168,11 @@ export default function Chat(props) {
     addDoc(chatMessages, {
       uid: uid,
       _id: nm._id,
-      text: nm.text,
+      text: nm.text || '',
       createdAt: nm.createdAt,
       user: nm.user,
-      image: nm.image,
-      location: nm.location
+      image: nm.image || null,
+      location: nm.location || null
     })
   }
 
@@ -196,6 +208,30 @@ export default function Chat(props) {
     }
   };
 
+  //rotation for refresh button
+  const handleAnimation = (time) => {
+    Animated.timing(rotateAnimation, {
+      toValue: 1,
+      duration: time,
+      useNativeDriver: true,
+    }).start(() => {
+      rotateAnimation.setValue(0);
+    });
+  };
+
+  const interpolateRotating = rotateAnimation.interpolate({
+    inputRange: [0, 1],
+    outputRange: ['0deg', '720deg'],
+  });
+
+  const animatedStyle = {
+    transform: [
+      {
+        rotate: interpolateRotating,
+      },
+    ],
+  };
+
   //edits text bubbles
   const renderBubble = (props) => {
     return (
@@ -221,7 +257,7 @@ export default function Chat(props) {
   }
 
   const renderActions = (props) => {
-    return <CustomActions {...props} />
+    return <CustomActions {...props} setAlert={setAlert} handleAnimation={handleAnimation} />
   };
 
   const renderCustomView = (props) => {
@@ -229,20 +265,29 @@ export default function Chat(props) {
     if (currentMessage.location) {
       return (
         <MapView
-          style={{ width: 150, height: 100, borderRadius: 13, margin: 3 }}
+          style={{ width: 220, height: 180, borderRadius: 13, margin: 3 }}
           region={{
             latitude: currentMessage.location.latitude,
             longitude: currentMessage.location.longitude,
             latitudeDelta: 0.0922,
             longitudeDelta: 0.0421,
           }}
-        />
+        >
+          <Marker
+            coordinate={{
+              latitude: currentMessage.location.latitude,
+              longitude: currentMessage.location.longitude,
+            }}
+            title={'current location'}
+          />
+        </MapView>
       );
     }
     return null;
   }
 
   LogBox.ignoreLogs([
+    'AsyncStorage',
     "Setting a timer",
     "Warning: ...",
     "undefined",
@@ -267,12 +312,9 @@ export default function Chat(props) {
         }}
         isTyping
         alwaysShowSend
-        lightboxProps={{ useNativeDriver: true }}
         renderCustomView={renderCustomView}
         // onLoadEarlier={onLoadEarlierMessages}
         // isLoadingEarlier={isLoadingEarlier}
-        // loadEarlier={messages.length >= 15 && messagePage <= messageLastPage}
-        infiniteScroll
         isCustomViewBottom
         renderActions={renderActions}
         // renderComposer={renderComposer}
@@ -281,13 +323,20 @@ export default function Chat(props) {
       />
       {Platform.OS === 'ios' &&
         <View style={{ height: 84, backgroundColor: selectedColor }}>
-          <ScrollView horizontal={true} style={{ flex: 1, margin: 15, flexDirection: 'row' }}>
-            <Trash2 style={{ marginRight: 30 }} stroke={defaultTextColor} fill={selectedColor} width={35} height={35}
+          <ScrollView horizontal={true} style={{ flex: 1, margin: 10, flexDirection: 'row' }}>
+            <Trash2 style={{ margin: 10, paddingRight: 20 }} stroke={defaultTextColor} fill={selectedColor} width={35} height={35}
               onPress={() => deleteMessagesLocally()}
             />
-            <RefreshCw stroke={defaultTextColor} fill={selectedColor} width={35} height={35}
-              onPress={() => { onSnapshot(orderMessages, onCollectionUpdate); checkInternet(); }}
-            />
+            <TouchableOpacity style={{ margin: 10 }} onPress={async () => { onSnapshot(orderMessages, onCollectionUpdate); checkInternet(); handleAnimation(800) }}>
+              <Animated.View style={[animatedStyle]}>
+                <RefreshCw
+                  stroke={defaultTextColor}
+                  fill={selectedColor}
+                  width={35} height={35}
+                />
+              </Animated.View>
+            </TouchableOpacity>
+            <Text style={{ margin: 20, paddingLeft: 10, color: defaultTextColor }}>{alert}</Text>
           </ScrollView>
         </View>
       }
